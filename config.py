@@ -24,8 +24,8 @@ CLASS_COLORS = {
 }
 
 # Параметры детекции
-DEFAULT_CONFIDENCE = 0.5
-DEFAULT_IOU = 0.45
+DEFAULT_CONFIDENCE = 0.3
+DEFAULT_IOU = 0.35
 
 # Параметры видео
 VIDEO_WIDTH = 640
