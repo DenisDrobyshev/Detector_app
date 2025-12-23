@@ -3,9 +3,10 @@ if __name__ == '__main__':
     import cv2
 
     from models.yolo_detector import YOLODetector
+    
+    from pathlib import Path
+    detector = YOLODetector(str(Path(__file__).resolve().parent / "best.pt"))
 
-
-    detector = YOLODetector(r"/_test/best.pt")
     img = cv2.imread("frame_phone.jpg")
 
     # достаточно низкий порог, чтобы увидеть хоть что-то

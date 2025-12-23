@@ -1,7 +1,9 @@
 from ultralytics import YOLO
 
-# Загрузка модели
-model = YOLO( "D:/PyCharm 2025.1/PycharmProjects/monitoring_app/best.pt")
+from pathlib import Path
+
+model = YOLO(str(Path(__file__).resolve().parent / "best.pt"))
+
 
 # Вывод информации о модели
 print(model.info())
