@@ -4,7 +4,7 @@
 import os
 
 # Пути к моделям
-YOLO_MODEL_PATH = r"/Tbest.pt"
+YOLO_MODEL_PATH = r"C:\Users\DenisDrobyshev\Desktop\detector_app\monitoring_app\Tbest.pt"
 
 INSIGHTFACE_MODEL = "buffalo_l"
 
