@@ -71,8 +71,6 @@ INSIGHTFACE_MODEL = "buffalo_l"  # имя модели InsightFace
 ## Запуск приложения
 
 ```
-cd monitoring_app
-.venv\Scripts\activate
 streamlit run app.py
 ```
 
@@ -83,12 +81,12 @@ http://localhost:8501
 
 ## Основные возможности
 
-- ** Webcam**  
+- Webcam  
   - Захват видеопотока с веб‑камеры.  
   - Онлайн‑детекция нарушений (сон, телефон и др.).  
   - Отрисовка рамок и меток на кадрах.
 
-- ** Upload Video**  
+- Upload Video  
   - Загрузка и обработка видеофайлов (MP4, AVI, MOV, MKV).  
   - Сохранение обработанного видео (опция).  
   - Формирование:
@@ -96,7 +94,7 @@ http://localhost:8501
     - графика распределения нарушений по типам;
     - текстового отчёта в формате, заданном в проектной работе.
 
-- ** Statistics**  
+- Statistics  
   - Просмотр сводной статистики по всем зафиксированным нарушениям.  
   - Визуализация количества нарушений по типам.
 
@@ -109,6 +107,4 @@ http://localhost:8501
 - InsightFace + onnxruntime  
 - Прочие зависимости из `requirements.txt`
 
-[18](https://www.youtube.com/watch?v=12trn2NKw5I)
-[19](https://www.youtube.com/watch?v=N8TxB43y-xM)
-[20](https://discuss.streamlit.io/t/tutorial-celebrity-face-recognition-with-streamlit-and-python/81340)
+
