@@ -29,6 +29,9 @@ class VideoProcessor:
         os.makedirs(self.segments_dir, exist_ok=True)
         os.makedirs(self.faces_dir, exist_ok=True)
 
+        # когда последний раз вырезали лицо (для эпизодов)
+        self.last_face_timestamp: datetime | None = None
+
     # ---------- ОБРАБОТКА ОДНОГО КАДРА ----------
 
     def process_frame(
@@ -42,7 +45,6 @@ class VideoProcessor:
         processed_frame = frame.copy()
 
         if detect_violations:
-            # детекция YOLO
             results = self.yolo_detector.detect(frame, conf_threshold)
             processed_frame = self.yolo_detector.annotate_frame(frame, results)
             violations = self.yolo_detector.get_violations(results)
@@ -50,8 +52,21 @@ class VideoProcessor:
             if violations:
                 timestamp = datetime.now()
 
-                # лицо + распознанное имя
-                face_path, offender_name = self.save_face_from_frame(frame, timestamp)
+                face_path = None
+                offender_name = "Неизвестный"
+
+                # решаем, вырезать ли лицо
+                need_face = False
+                if self.last_face_timestamp is None:
+                    need_face = True
+                else:
+                    delta = (timestamp - self.last_face_timestamp).total_seconds()
+                    if delta > 3:
+                        need_face = True
+
+                if need_face:
+                    face_path, offender_name = self.save_face_from_frame(frame, timestamp)
+                    self.last_face_timestamp = timestamp
 
                 for v in violations:
                     v["timestamp"] = timestamp
@@ -74,7 +89,11 @@ class VideoProcessor:
         video_path: str,
         output_path: str | None = None,
         conf_threshold: float = 0.5,
+        skip_frames: int = 1,
     ) -> Generator[Tuple[np.ndarray, List[Dict[str, Any]], int], None, Tuple[bool, int]]:
+        """
+        Генератор: возвращает обработанный кадр, список нарушений и номер кадра.
+        """
         cap = cv2.VideoCapture(video_path)
         if not cap.isOpened():
             yield from ()
@@ -91,23 +110,29 @@ class VideoProcessor:
 
         frame_index = 0
         self.clear_history()
+        self.last_face_timestamp = None
 
         while cap.isOpened():
             ret, frame = cap.read()
             if not ret:
                 break
 
-            processed_frame, violations = self.process_frame(
-                frame,
-                detect_violations=True,
-                recognize_faces=False,
-                conf_threshold=conf_threshold,
-            )
+            frame_index += 1
+
+            # детекция только на каждом N‑м кадре
+            if frame_index % skip_frames == 0:
+                processed_frame, violations = self.process_frame(
+                    frame,
+                    detect_violations=True,
+                    recognize_faces=False,
+                    conf_threshold=conf_threshold,
+                )
+            else:
+                processed_frame, violations = frame, []
 
             if writer:
                 writer.write(processed_frame)
 
-            frame_index += 1
             yield processed_frame, violations, frame_index
 
         cap.release()
@@ -140,19 +165,15 @@ class VideoProcessor:
             return None, "Неизвестный"
 
         face = faces[0]
-
-        # распознавание
         recognized_name = self.face_recognizer.recognize_face(face.embedding)
         final_name = recognized_name if recognized_name else "Неизвестный"
 
-        # вырезаем лицо
         bbox = face.bbox.astype(int)
         x1, y1, x2, y2 = bbox
         h, w = frame.shape[:2]
         x1, y1, x2, y2 = max(0, x1), max(0, y1), min(w, x2), min(h, y2)
         face_img = frame[y1:y2, x1:x2]
 
-        # сохраняем
         ts_str = timestamp.strftime("%Y%m%d_%H%M%S")
         filename = f"face_{ts_str}.jpg"
         filepath = os.path.join(self.faces_dir, filename)

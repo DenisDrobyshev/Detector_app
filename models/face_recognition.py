@@ -7,9 +7,9 @@ import cv2
 import numpy as np
 from insightface.app import FaceAnalysis
 from config import INSIGHTFACE_MODEL
+import pickle
 
-# ✅ КОНСТАНТА ПРЯМО ЗДЕСЬ
-FACES_DB_PATH = "faces_db.npy"
+STUDENTS_DB_PATH = "students.pkl"
 
 
 class FaceRecognizer:
@@ -22,20 +22,21 @@ class FaceRecognizer:
         self.load_database()
         print(f"✅ Готово. Известных лиц: {len(self.known_faces)}")
 
+    # ---------- ДЕТЕКЦИЯ И РЕГИСТРАЦИЯ ----------
+
     def detect_faces(self, frame):
         """Детекция лиц на кадре."""
-        faces = self.app.get(frame)
-        return faces
+        return self.app.get(frame)
 
     def register_face(self, frame, name: str) -> bool:
         """Регистрация нового лица в базе."""
         faces = self.detect_faces(frame)
-        if faces:
-            embedding = faces[0].embedding
-            self.known_faces[name] = embedding
-            self.save_database()
-            return True
-        return False
+        if not faces:
+            return False
+        embedding = faces[0].embedding
+        self.known_faces[name] = embedding
+        self.save_database()
+        return True
 
     def recognize_face(self, face_embedding: np.ndarray, threshold: float = 0.5):
         """Распознавание лица по эмбеддингу."""
@@ -60,7 +61,9 @@ class FaceRecognizer:
             cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
         return frame
 
-    def save_database(self, path: str = FACES_DB_PATH):
+    # ---------- РАБОТА С БАЗОЙ ЛИЦ ----------
+
+    def save_database(self, path: str = STUDENTS_DB_PATH):
         """Сохраняет базу известных лиц в файл."""
         if not self.known_faces:
             return
@@ -73,7 +76,7 @@ class FaceRecognizer:
         except Exception as e:
             print(f"❌ Ошибка сохранения: {e}")
 
-    def load_database(self, path: str = FACES_DB_PATH):
+    def load_database(self, path: str = STUDENTS_DB_PATH):
         """Загружает базу известных лиц из файла."""
         self.known_faces = {}
 
@@ -88,7 +91,7 @@ class FaceRecognizer:
                 embeddings = data["embeddings"]
                 if len(names) == len(embeddings):
                     self.known_faces = {
-                        name: embedding for name, embedding in zip(names, embeddings)
+                        name: emb for name, emb in zip(names, embeddings)
                     }
                     print(f"📂 База загружена: {len(self.known_faces)} лиц")
                 else:
@@ -107,6 +110,6 @@ class FaceRecognizer:
     def clear_database(self):
         """Очищает базу лиц."""
         self.known_faces = {}
-        if os.path.exists(FACES_DB_PATH):
-            os.remove(FACES_DB_PATH)
+        if os.path.exists(STUDENTS_DB_PATH):
+            os.remove(STUDENTS_DB_PATH)
         print("🗑️ База очищена")

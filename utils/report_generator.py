@@ -36,20 +36,13 @@ class ReportGenerator:
 
         data = []
         for v in violations:
-            ts = v.get("timestamp")
-            if isinstance(ts, datetime):
-                ts_str = ts.strftime("%Y-%m-%d %H:%M:%S")
-            else:
-                ts_str = str(ts)
-
             data.append({
-                "Время": ts_str,
-                "Тип нарушения": v.get("class_name", "unknown"),
-                "Уверенность": f"{v.get('confidence', 0.0):.2%}",
-                "Координаты": f"{v.get('bbox', [])}",
-                "Нарушитель": v.get("offender_name", "Неизвестный"),
-                "Сегмент": v.get("segment_path", ""),
-                "Фото лица": v.get("face_path", ""),
+                'Время': v['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
+                'Тип нарушения': v['class_name'],
+                'Уверенность': f"{v['confidence']:.2%}",
+                'Координаты': f"{v['bbox']}",
+                'Нарушитель': v.get('offender_name', 'Неизвестный'),
+                'Фото лица': v.get('face_path', ''),
             })
 
         df = pd.DataFrame(data)
