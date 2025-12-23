@@ -42,6 +42,7 @@ class VideoProcessor:
         processed_frame = frame.copy()
 
         if detect_violations:
+            # детекция YOLO
             results = self.yolo_detector.detect(frame, conf_threshold)
             processed_frame = self.yolo_detector.annotate_frame(frame, results)
             violations = self.yolo_detector.get_violations(results)
@@ -49,12 +50,12 @@ class VideoProcessor:
             if violations:
                 timestamp = datetime.now()
 
-                # сохранение лица с кадра (если найдено)
-                face_path = self.save_face_from_frame(frame, timestamp)
+                # лицо + распознанное имя
+                face_path, offender_name = self.save_face_from_frame(frame, timestamp)
 
                 for v in violations:
                     v["timestamp"] = timestamp
-                    v.setdefault("offender_name", "Неизвестный")
+                    v["offender_name"] = offender_name
                     if face_path is not None:
                         v["face_path"] = face_path
 
@@ -129,32 +130,35 @@ class VideoProcessor:
         self,
         frame: np.ndarray,
         timestamp: datetime | None = None,
-        offender_name: str = "Неизвестный",
-    ) -> str | None:
+    ) -> tuple[str | None, str]:
+        """Сохраняет лицо + распознаёт студента. Возвращает путь и имя."""
         if timestamp is None:
             timestamp = datetime.now()
 
         faces = self.face_recognizer.detect_faces(frame)
         if not faces:
-            return None
+            return None, "Неизвестный"
 
         face = faces[0]
+
+        # распознавание
+        recognized_name = self.face_recognizer.recognize_face(face.embedding)
+        final_name = recognized_name if recognized_name else "Неизвестный"
+
+        # вырезаем лицо
         bbox = face.bbox.astype(int)
         x1, y1, x2, y2 = bbox
         h, w = frame.shape[:2]
-        x1 = max(0, x1)
-        y1 = max(0, y1)
-        x2 = min(w, x2)
-        y2 = min(h, y2)
-
+        x1, y1, x2, y2 = max(0, x1), max(0, y1), min(w, x2), min(h, y2)
         face_img = frame[y1:y2, x1:x2]
 
+        # сохраняем
         ts_str = timestamp.strftime("%Y%m%d_%H%M%S")
         filename = f"face_{ts_str}.jpg"
         filepath = os.path.join(self.faces_dir, filename)
         cv2.imwrite(filepath, face_img)
 
-        return filepath
+        return filepath, final_name
 
     def save_segment(
         self,

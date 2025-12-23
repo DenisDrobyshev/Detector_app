@@ -19,7 +19,10 @@ if "upload_processor" not in st.session_state:
     st.session_state["upload_processor"] = VideoProcessor()
 
 if "upload_violations" not in st.session_state:
-    st.session_state["upload_violations"] = []
+    st.session_state["upload_violations"] = []  # сырые нарушения по кадрам
+
+if "upload_aggregated" not in st.session_state:
+    st.session_state["upload_aggregated"] = []  # агрегированные эпизоды
 
 if "upload_csv_path" not in st.session_state:
     st.session_state["upload_csv_path"] = None
@@ -93,22 +96,24 @@ if uploaded_file is not None:
 
         st.success("Обработка завершена!")
 
+        # сырые нарушения по кадрам
         violations = processor.get_violation_history()
         st.session_state["upload_violations"] = violations
 
         report_gen = ReportGenerator()
 
         if violations:
-            # агрегируем по времени, чтобы убрать дубликаты
+            # агрегируем по времени → эпизоды (одно нарушение на тип/человека)
             aggregated = report_gen.aggregate_violations_by_time(
                 violations,
                 time_window_seconds=2,
             )
+            st.session_state["upload_aggregated"] = aggregated
 
             # считаем по агрегированным
             st.subheader(f"📊 Обнаружено нарушений: {len(aggregated)}")
 
-            # и отчёты тоже строим по агрегированным
+            # отчёты тоже по агрегированным
             st.session_state["upload_csv_path"] = report_gen.create_csv_report(aggregated)
             st.session_state["upload_txt_path"] = report_gen.create_text_report(aggregated)
 
@@ -119,13 +124,14 @@ if uploaded_file is not None:
 
         else:
             st.info("Нарушений не обнаружено")
+            st.session_state["upload_aggregated"] = []
             st.session_state["upload_csv_path"] = None
             st.session_state["upload_txt_path"] = None
             st.session_state["upload_video_path"] = None
 
 # ---------- БЛОК СКАЧИВАНИЯ И ГРАФИКА ----------
 
-if st.session_state["upload_violations"]:
+if st.session_state["upload_aggregated"]:
     st.subheader("Результаты обработки")
 
     col1, col2, col3 = st.columns(3)
@@ -144,12 +150,9 @@ if st.session_state["upload_violations"]:
                     key="upload_csv_download",
                 )
 
-    # 2) График статистики по агрегированным событиям
+    # 2) График статистики по агрегированным событиям (ЭПИЗОДАМ)
     with col2:
-        aggregated = report_gen.aggregate_violations_by_time(
-            st.session_state["upload_violations"],
-            time_window_seconds=2,
-        )
+        aggregated = st.session_state["upload_aggregated"]
         fig = report_gen.create_statistics_plot(aggregated)
         if fig:
             st.pyplot(fig)
