@@ -1,5 +1,11 @@
 # Система мониторинга дисциплины на занятиях
 
+[![Python](https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Streamlit](https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io/)
+[![YOLO](https://img.shields.io/badge/YOLO-Ultralytics-00B0FF)]()
+[![InsightFace](https://img.shields.io/badge/InsightFace-face%20recognition-5C3EE8)]()
+[![OpenCV](https://img.shields.io/badge/OpenCV-5C3EE8?logo=opencv&logoColor=white)](https://opencv.org/)
+
 Интерактивное веб‑приложение на Streamlit для **обнаружения нарушений дисциплины** на занятиях по видеопотоку.  
 Используются нейросетевые модели:
 
